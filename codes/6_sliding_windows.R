@@ -16,26 +16,40 @@ library(data.table)
 library(PopGenome)
 
 ## LOAD VCF
-VCF <- "../data/references/HPX14_maf_filtered.vcf.gz"
+VCF <- "data/references/HPX14_maf_filtered.vcf.gz"
 genename <- gsub("_maf_filtered.vcf.gz", "", basename(VCF))
 
-OUTPUT <- "../results/tables/sliding_windows/"
+OUTPUT <- "results/tables/sliding_windows/"
 if(!dir.exists(OUTPUT)) dir.create(OUTPUT)
 
 ## LOAD METADATA
-metadata <- readxl::read_xlsx("../data/metadata/global_Metadata.xlsx")
+metadata <- readxl::read_xlsx("data/metadata/global_Metadata.xlsx")
 
 Species <- metadata %>% 
   select(species) %>% unique() %>% pull() %>% sort()
 
-for(j in 1:length(Species))
+for(j in 2:length(Species))
 {
   cat('===============================\n')
   cat("  Processing ", Species[j], " ...\n")
   cat('===============================\n')
   # EXTRACT POPULATION SAMPLE IDs
-  samplesTokeep <- "../data/references/samplesTokeep.txt"
-  targetIDs <- metadata[which(metadata$species == Species[j]),]$sample_ID
+  samplesTokeep <- "data/references/samplesTokeep.txt"
+  target <- metadata[which(metadata$species == Species[j]),]
+  
+  ## Extract Populations and their sample IDs
+  Population <- target %>% 
+      select(countries, sample_ID) %>% 
+      group_by(countries) %>% # Group by Population
+      filter(n() >= 10) %>% # Remove populations with low number of isolates
+      ungroup()
+  
+  ## Create a list for each Pop/sampleIDs
+  population <- data.frame( value = Population, stringsAsFactors = T) %>%
+      group_by(value.countries) %>%
+      summarize(list_result = list(value.sample_ID)) %>% .$list_result
+  
+  targetIDs <- Population %>% pull(sample_ID)
   
   # SAVE SAMPLEIDs
   write.table(targetIDs, samplesTokeep, col.names = FALSE, 
@@ -45,7 +59,7 @@ for(j in 1:length(Species))
   #---- Extract Isolates from filtered vcf file
   #=============================================
   
-  OUT <- paste0("../data/references/", Species[j])
+  OUT <- paste0("data/references/", Species[j])
   system(paste0("vcftools --gzvcf ", VCF,
                 " --keep ", samplesTokeep, 
                 " --recode --recode-INFO-all --out ", OUT))
@@ -69,7 +83,7 @@ for(j in 1:length(Species))
   
   names(vcf)[1] <- "CHROM"
   
-  chroms <- vcf %>% select(CHROM) %>% unique() %>% pull(); 
+  chroms <- vcf %>% pull(CHROM) %>% unique(); 
   frompos <- vcf$POS[1]; 
   topos <- vcf$POS[nrow(vcf)];
   samplenames <- names(vcf)[-c(1:9)]
@@ -77,15 +91,17 @@ for(j in 1:length(Species))
   ##########################
   ## Set list of populations
   ##########################
-  ## Extract Populations and thier sample IDs
-  Population <- metadata %>% 
-    filter(species == Species[j]) %>% 
-    select(countries, sample_ID)
-  
-  ## Create a list for each Pop/sampleIDs
-  population <- data.frame( value = Population, stringsAsFactors = T) %>%
-    group_by(value.countries) %>%
-    summarize(list_result = list(value.sample_ID)) %>% .$list_result
+  # ## Extract Populations and their sample IDs
+  # Population <- metadata %>% 
+  #   filter(species == Species[j]) %>% 
+  #   select(countries, sample_ID) %>% 
+  #     group_by(countries) %>% 
+  #     filter(n() >= 10)
+  # 
+  # ## Create a list for each Pop/sampleIDs
+  # population <- data.frame( value = Population, stringsAsFactors = T) %>%
+  #   group_by(value.countries) %>%
+  #   summarize(list_result = list(value.sample_ID)) %>% .$list_result
   
   #################
   ### Read vcf file

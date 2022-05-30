@@ -10,11 +10,10 @@ rm(list = ls())
 # ----------------------------
 # packages <- c("hierfstat", "vcfR", "poppr", "ape", "adegenet")
 # install.packages(setdiff(packages, rownames(installed.packages())))
-
-install.packages("devtools")
-library(devtools)
-install_github("jgx65/hierfstat")
-library("hierfstat")
+# install.packages("devtools")
+# library(devtools)
+# install_github("jgx65/hierfstat")
+# library("hierfstat")
 
 library(hierfstat)
 library(vcfR)
@@ -26,18 +25,18 @@ library(adegenet)
 library(reshape2)
 
 ## LOAD VCF
-FILTERED_VCF <- "../data/process/HPX15.vcf.gz"
+FILTERED_VCF <- "data/process/HPX15.vcf.gz"
 
 ## LOAD METADATA
-metadata <- readxl::read_xlsx("../Data/metadata/global_Metadata.xlsx")
+metadata <- readxl::read_xlsx("data/metadata/global_Metadata.xlsx")
 
 ## Minor allele freq file
 genename <- gsub(".vcf.gz", "", basename(FILTERED_VCF))
-maf_file <- data.table::fread(paste0("../results/tables/", genename, "_MAF.tsv"), 
+maf_file <- data.table::fread(paste0("results/tables/", genename, "_MAF.tsv"), 
                               header = TRUE)
 
 # GET POSITIONS BASED ON MAF > 0.01
-snpsTokeep <- "../data/process/snpsTokeep.txt"
+snpsTokeep <- "data/process/snpsTokeep.txt"
 
 maf_file %>% 
   filter(maf > 0.01) %>% 
@@ -49,7 +48,7 @@ maf_file %>%
 #==========================================
 #---- Extract SNPs from filtered vcf file
 #==========================================
-MAF_FILTERED_VCF <- paste0("../data/references/", gsub(".vcf.gz", "_maf_filtered", basename(FILTERED_VCF)))
+MAF_FILTERED_VCF <- paste0("data/references/", gsub(".vcf.gz", "_maf_filtered", basename(FILTERED_VCF)))
 system(paste0("vcftools --gzvcf ", FILTERED_VCF,
               " --positions ", snpsTokeep, 
               " --recode --recode-INFO-all --out ", MAF_FILTERED_VCF))

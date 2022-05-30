@@ -16,11 +16,11 @@ library(data.table)
 library(PopGenome)
 
 ## LOAD VCF
-VCF <- "../data/references/MISO_maf_filtered.vcf.gz"
+VCF <- "data/references/MISO_maf_filtered.vcf.gz"
 genename <- gsub("_maf_filtered.vcf.gz", "", basename(VCF))
 
 ## LOAD METADATA
-metadata <- readxl::read_xlsx("../data/metadata/global_Metadata.xlsx")
+metadata <- readxl::read_xlsx("data/metadata/global_Metadata.xlsx")
 
 Species <- metadata %>% 
   select(species) %>% unique() %>% pull() %>% sort()
@@ -32,7 +32,7 @@ for(j in 1:length(Species))
   cat("  Processing ", Species[j], " ...\n")
   cat('===============================\n')
   # EXTRACT POPULATION SAMPLE IDs
-  samplesTokeep <- "../data/references/samplesTokeep.txt"
+  samplesTokeep <- "data/references/samplesTokeep.txt"
   targetIDs <- metadata[which(metadata$species == Species[j]),]$sample_ID
   number_samples <- length(targetIDs)
   
@@ -44,7 +44,7 @@ for(j in 1:length(Species))
   #---- Extract Isolates from filtered vcf file
   #=============================================
   
-  OUT <- paste0("../data/references/", Species[j])
+  OUT <- paste0("data/references/", Species[j])
   system(paste0("vcftools --gzvcf ", VCF,
                 " --keep ", samplesTokeep, 
                 " --recode --recode-INFO-all --out ", OUT))
@@ -102,7 +102,7 @@ for(j in 1:length(Species))
                              Theta = Theta, Tajima = Tajima, 
                              FuLi_F = FuLi.F, FuLi_D = FuLi.D)
 
-  per_species_stats <- paste0("../results/tables/", genename, "_neutrality_stats.tsv")
+  per_species_stats <- paste0("results/tables/", genename, "_neutrality_stats.tsv")
   
   ## Save file
   if(!file.exists(per_species_stats)){
