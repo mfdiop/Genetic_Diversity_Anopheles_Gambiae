@@ -1,0 +1,15 @@
+results/
+explonatory/
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+*.vcf*
+*.log
+*.tab
+*.tsv
+*.txt
+HaplotypeNetwork.R
+tempnet.r
+*.fasta
+pat.txt
