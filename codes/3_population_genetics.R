@@ -376,3 +376,5 @@ ggplot(data = dapc_coords, aes(x = PC1, y = PC2)) +
 # Save plot
 ggsave(paste0(output_dir, "/DAPC.pdf"),
        width = 12, height = 8, dpi = 600)
+
+system(paste0("rm -rf ", data.out, "*"))
