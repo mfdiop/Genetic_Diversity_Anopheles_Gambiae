@@ -1,31 +1,34 @@
-
-# estimate_maf.R
+#===================================================
+# 1_estimate_maf.R
 #
 # Author: Mouhamadou F. DIOP
-# Date: 2021-11-20
+# Date: 2022-07-10
 #
 # Purpose:
 # Estimate Minor Allele Frequency for each species.
 #
 # https://speciationgenomics.github.io/filtering_vcfs/
-# ------------------------------------------------------------------
+#===================================================
 
-arguments <- commandArgs(trailingOnly = TRUE)
+rm(list = ls())
 
-if(length(arguments) == 0){
-  cat("=============================================\n")
-  cat("SCRIPT SHOULD BE RUN LIKE: \n")
-  cat("Rscript estimate_maf.R file.vcf.gz")
-  cat("\n")
-  stop("NOT ENOUGH ARGUMENTS SUPPLIED .....")
-  cat("=============================================\n")
+VCF <- commandArgs(trailingOnly = TRUE)
+
+if(length(VCF) == 0){
+    print("===================================================", quote = FALSE)
+    print("        Estimate Minor Allele Frequency            ", quote = FALSE)
+    print("===================================================", quote = FALSE)
+    print("", quote = FALSE)
+    print(" Usage: Rscript 1_estimate_maf.R file.vcf.gz", quote = FALSE)
+    stop(" Not enough arguments supplied ...")
+    
 }
 
 ## Uncomment these lines if you want to install the packages
-packages <- c("tidyverse", "data.table")
-install.packages(setdiff(packages, rownames(installed.packages())))
+# packages <- c("tidyverse", "data.table")
+# install.packages(setdiff(packages, rownames(installed.packages())))
 
-# load  packages
+# Load  packages
 library(tidyverse)
 library(data.table)
 
@@ -33,9 +36,9 @@ library(data.table)
 #   FUNCTIONS
 #=============
 # MINOR ALLELE FREQUENCY ACROSS SPECIES
-computeMAF <- function(VCF, OUT, genename)
+computeMAF <- function(FILTERED_VCF, OUT)
 {
-  system(sprintf("vcftools --gzvcf %s --freq2 --out %s ", VCF, OUT))
+  system(sprintf("vcftools --gzvcf %s --freq2 --out %s ", FILTERED_VCF, OUT))
 
   ## LOAD ALLELE FREQUENCY FILES
   var_freq <- fread(paste0(OUT, ".frq"))
@@ -56,25 +59,22 @@ computeMAF <- function(VCF, OUT, genename)
     apply(1, function(z) min(z))
   
   ## SAVE MAF FILE
-  maf_file <- paste0("../results/tables/", genename, "_MAF.tsv")
+  maf_file <- file.path(OUT, "MAF.tsv")
+  if(!file.exists(maf_file)) file.create(maf_file)
 
-  file.create(maf_file)
   write.table(var_freq, maf_file, col.names = TRUE, row.names = FALSE, quote = FALSE, sep = '\t')
   file.remove(paste0(OUT, ".frq"))
 }
 
-#=======================================================================
+#================================================
+#================================================
 # MINOR ALLELE FREQUENCY PER SPECIES
-computeMAF_perSpecies <- function(VCF_OUT, targetSamples, OUT, genename)
+computeMAF_perSpecies <- function(VCF_OUT, targetSamples, OUT, MAF_OUTPUT)
 {
-  system(sprintf("vcftools --gzvcf %s --keep %s --freq2 --out %s ", VCF_OUT, targetSamples, OUT))  # --max-alleles 2
+  system(sprintf("vcftools --gzvcf %s --keep %s --freq2 --out %s ", VCF_OUT, targetSamples, OUT))
   file.remove(targetSamples)
   
   ## LOAD ALLELE FREQUENCY FILES
-  
-  # var_freq <- read_delim(paste0(OUT, ".frq"), delim = "\t", skip = 1,
-  #                        col_names = c("chr", "pos", "nalleles", "nchr", "a1", "a2", "a3", "a4"))
-  
   var_freq <- fread(paste0(OUT, ".frq"))
   names(var_freq) = c("chr", "pos", "nalleles", "nchr", "a1", "a2", "a3", "a4")   
   
@@ -94,7 +94,7 @@ computeMAF_perSpecies <- function(VCF_OUT, targetSamples, OUT, genename)
     apply(1, function(z) min(z))
   
   ## SAVE MAF FILE
-  maf_file <- paste0("../results/tables/", genename, "_PerSpecies_MAF.tsv")
+  maf_file <- paste0(MAF_OUTPUT, "/PerSpecies_MAF.tsv")
   if (!file.exists(maf_file)) {
     file.create(maf_file)
     write.table(var_freq, maf_file, col.names = TRUE, row.names = FALSE, quote = FALSE, sep = '\t')
@@ -108,14 +108,10 @@ computeMAF_perSpecies <- function(VCF_OUT, targetSamples, OUT, genename)
 
 #=======================================================================
 ## LOAD METADATA
-metadata <- readxl::read_xlsx("../data/metadata/global_Metadata.xlsx")
+metadata <- readxl::read_xlsx("data/metadata/global_Metadata.xlsx")
 
-## LOAD VCF
-VCF <- arguments[1]
-# VCF <- "../data/raw/HPX15.vcf.gz"
-
-working_dir <- "../data/process/"
-output_dir <- "../results/tables/Allel_Freq/"
+working_dir <- "data/process/"
+output_dir <- "results/tables/Allel_Freq/"
 system(sprintf("mkdir -p %s", output_dir))
 system(sprintf("mkdir -p %s", working_dir))
 
@@ -137,7 +133,7 @@ system(sprintf("vcftools --gzvcf %s --remove-indels --max-missing %s --minQ %s -
 system(paste0("mv ", FILTERED_VCF, ".recode.vcf ", FILTERED_VCF, ".vcf"))
 
 ## Compress vcf
-system(sprintf("bgzip %s", paste0(FILTERED_VCF, ".vcf")))
+system(sprintf("bgzip -f %s", paste0(FILTERED_VCF, ".vcf")))
 
 FILTERED_VCF <- paste0(FILTERED_VCF, ".vcf.gz")
 
@@ -145,8 +141,11 @@ FILTERED_VCF <- paste0(FILTERED_VCF, ".vcf.gz")
 # MINOR ALLELE FREQUENCY ACROSS SPECIES
 #====================================
 genename <- gsub(".vcf.gz", "", basename(VCF))
-MAF_OUTPUT <- paste0("../results/tables/", genename)
-computeMAF(FILTERED_VCF, MAF_OUTPUT, genename)
+MAF_OUTPUT <- paste0("results/tables/", genename)
+
+if(!dir.exists(MAF_OUTPUT)) dir.create(MAF_OUTPUT)
+
+computeMAF(FILTERED_VCF, MAF_OUTPUT)
 
 #====================================
 # MINOR ALLELE FREQUENCY PER SPECIES
@@ -174,8 +173,8 @@ for(j in 1:length(Species))
   cat('===============================\n')
   
   ## COMPUTE MINOR ALLELE FREQUENCY
-  # computeMAF_perSpecies(FILTERED_VCF, targetSamples, OUT, genename)
-  computeMAF_perSpecies(VCF, targetSamples, OUT, genename)
+  computeMAF_perSpecies(FILTERED_VCF, targetSamples, OUT, MAF_OUTPUT)
+  # computeMAF_perSpecies(VCF, targetSamples, OUT, genename)
 }
 
 system(paste0("rm -rf ", output_dir)) # will delete directory called 'output_dir'
