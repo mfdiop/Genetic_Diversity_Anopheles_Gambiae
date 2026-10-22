@@ -3,6 +3,7 @@
 Welcome to the GitHub repository accompanying our manuscript:
 
 Title: Reduced Genetic Diversity of Key Fertility and Vector Competency Related Genes in Anopheles gambiae s.l. Across Sub-Saharan Africa
+
 Authors: ​​Fatoumata Seck, Mouhamadou Fadel Diop, Karim Mané, Amadou Diallo, Idrissa Dieng, Moussa Namountougou, Abdoulaye Diabate, Alfred Amambua-Ngwa, Ibrahima Dia, Benoit Sessinou Assogba
 Corresponding Author: Benoit S Assogba, Sessinou-Benoit.Assogba@lshtm.ac.uk
 
@@ -12,4 +13,5 @@ In the pursuit of malaria elimination, insecticide resistance poses a significan
 ## Citation
 
 If you use any of the data or code from this repository, please cite:
+
 Seck, F., Diop, M. F., Mané, K., Diallo, A., Dieng, I., Namountougou, M., Diabate, A., Amambua-Ngwa, A., Dia, I., & Assogba, B. S. (2025). Reduced Genetic Diversity of Key Fertility and Vector Competency Related Genes in Anopheles gambiae s.l. Across Sub-Saharan Africa. Genes, 16(5), 543. https://doi.org/10.3390/genes16050543
